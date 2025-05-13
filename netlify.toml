@@ -6,9 +6,6 @@
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
-# Don't use any plugins
-[plugins]
-
 # Handle SPA redirects and rewrites
 [[redirects]]
   from = "/*"
