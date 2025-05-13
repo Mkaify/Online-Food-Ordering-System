@@ -2,9 +2,11 @@
   command = "bash ./netlify-build.sh"
   publish = "public"
 
-# No need for custom environment variables since we're building a static site
+# Environment variables - explicitly disable Next.js plugin
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  NETLIFY_USE_NEXTJS = "false"
+  NODE_ENV = "production"
 
 # Handle SPA redirects and rewrites
 [[redirects]]
