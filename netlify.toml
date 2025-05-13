@@ -1,5 +1,5 @@
 [build]
-  command = "pwsh -File ./netlify-build.ps1"
+  command = "bash ./netlify-build.sh"
   publish = "public"
 
 [build.environment]

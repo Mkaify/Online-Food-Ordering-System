@@ -22,8 +22,8 @@ The Food Ordering System is a full-stack application built with:
 
 ## Links
 
-- [GitHub Repository](https://github.com/Mkaify/food-ordering-system)
-- [Full Documentation](https://github.com/Mkaify/food-ordering-system/blob/main/README.md)
+- [GitHub Repository](https://github.com/Mkaify/Online-Food-Ordering-System)
+- [Full Documentation](https://github.com/Mkaify/Online-Food-Ordering-System/blob/main/README.md)
 
 ## Deployment
 

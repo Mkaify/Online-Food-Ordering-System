@@ -15,21 +15,55 @@ cat > public/index.html << 'EOF'
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
-  <div class="flex items-center justify-center h-screen">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold mb-6">Food Ordering System</h1>
-      <p class="text-xl mb-8">Delicious food delivered to your door</p>
-      <div class="mt-8">
-        <a href="https://github.com/Mkaify/food-ordering-system" 
-           class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+  <div class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold mb-4">Food Ordering System</h1>
+        <p class="text-xl text-gray-600">Delicious food delivered to your door</p>
+      </div>
+      
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">About This Project</h2>
+        <p class="text-gray-700 mb-4">
+          This is a full-stack food ordering application that allows users to browse restaurants, 
+          add items to cart, and place orders for delivery or pickup.
+        </p>
+        <p class="text-gray-700">
+          Built with Next.js, TypeScript, Prisma, TailwindCSS, and NextAuth.js.
+        </p>
+      </div>
+      
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Key Features</h2>
+        <ul class="list-disc pl-5 text-gray-700 space-y-2">
+          <li>Browse restaurants and menus</li>
+          <li>Add items to cart</li>
+          <li>Complete checkout process</li>
+          <li>Track order status</li>
+          <li>User authentication</li>
+        </ul>
+      </div>
+      
+      <div class="text-center">
+        <a href="https://github.com/Mkaify/Online-Food-Ordering-System" 
+           class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-block">
           View on GitHub
         </a>
       </div>
     </div>
+    
+    <footer class="mt-8 text-center text-gray-500 text-sm">
+      © 2023 Food Ordering System. All rights reserved.
+    </footer>
   </div>
 </body>
 </html>
 EOF
+
+# Copy README to public directory if it doesn't exist there
+if [ ! -f public/README.md ]; then
+  cp README.md public/README.md 2>/dev/null || echo "No README.md found to copy"
+fi
 
 # Exit with success
 echo "Static build completed successfully!"
