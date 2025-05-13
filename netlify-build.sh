@@ -1,10 +1,10 @@
 #!/bin/bash
 echo "Building a static version for Netlify..."
 
-# Make sure the required directories exist
-mkdir -p public/static/html
+# Create public directory if it doesn't exist
+mkdir -p public
 
-# Create basic static pages
+# Create basic static pages directly in the public directory
 cat > public/index.html << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
@@ -60,10 +60,46 @@ cat > public/index.html << 'EOF'
 </html>
 EOF
 
-# Copy README to public directory if it doesn't exist there
-if [ ! -f public/README.md ]; then
-  cp README.md public/README.md 2>/dev/null || echo "No README.md found to copy"
-fi
+# Create a _redirects file for Netlify
+cat > public/_redirects << 'EOF'
+# Netlify redirects file
+# Redirect all paths to index.html for client-side routing
+/*    /index.html   200
+EOF
+
+# Create a README.md file
+cat > public/README.md << 'EOF'
+# Food Ordering System (Netlify Deployment)
+
+This is a static version of the Food Ordering System deployed on Netlify.
+
+## About This Project
+
+The Food Ordering System is a full-stack application built with:
+
+- Next.js
+- TypeScript
+- Prisma
+- TailwindCSS
+- NextAuth.js
+
+## Features
+
+- Browse restaurants and menus
+- Add items to cart
+- Complete checkout process
+- Track order status
+- User authentication
+
+## Links
+
+- [GitHub Repository](https://github.com/Mkaify/Online-Food-Ordering-System)
+- [Full Documentation](https://github.com/Mkaify/Online-Food-Ordering-System/blob/main/README.md)
+
+## Deployment
+
+This static version is deployed on Netlify.
+EOF
 
 # Exit with success
 echo "Static build completed successfully!"
