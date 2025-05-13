@@ -6,6 +6,7 @@ import { useParams, redirect } from "next/navigation";
 import { MenuItemSkeleton } from "@/components/common/Skeletons";
 import { useCart } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getMockRestaurants } from "@/lib/mock-adapter";
 
 interface MenuItem {
   id: string;
@@ -87,6 +88,13 @@ const getMenuItemImage = (category: string, name: string) => {
   // Default food image
   return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c';
 };
+
+export function generateStaticParams() {
+  const restaurants = getMockRestaurants();
+  return restaurants.map(restaurant => ({
+    id: restaurant.id,
+  }));
+}
 
 export default function RestaurantDetail() {
   const params = useParams();

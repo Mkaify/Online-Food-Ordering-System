@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { MOCK_API_ENABLED, getMockRestaurants } from "@/lib/mock-adapter";
+
+export const dynamic = "force-static";
 
 export async function GET(request: Request) {
+  // For static export, use mock data
+  if (MOCK_API_ENABLED) {
+    return NextResponse.json(getMockRestaurants());
+  }
+  
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");

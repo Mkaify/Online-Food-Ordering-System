@@ -1,162 +1,184 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
+export const dynamic = 'force-static';
+
+// For static export - generate example order IDs
+export function generateStaticParams() {
+  return [
+    { id: 'example-order-1' },
+    { id: 'example-order-2' },
+    { id: 'example-order-3' },
+  ];
+}
+
 export async function GET(
-  request: Request
-  // We don't use context.params to avoid the Next.js dynamic API error
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
+  const orderId = params.id;
+
   try {
     const session = await getServerSession(authOptions);
-
+    
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be logged in to view orders" },
+        { error: "Not authenticated" },
         { status: 401 }
       );
     }
 
-    // Extract ID from URL to avoid 'sync dynamic APIs' error
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
-    const id = pathParts[pathParts.length - 1];
-    const userId = session.user.id;
-
     // Fetch the order
     const order = await prisma.order.findUnique({
-      where: {
-        id,
-      },
+      where: { id: orderId },
       include: {
-        restaurant: {
-          select: {
-            name: true,
-          },
-        },
         items: {
           include: {
             menuItem: {
               select: {
                 name: true,
+                description: true,
+                price: true,
                 image: true,
               },
             },
           },
         },
+        restaurant: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
-    // Check if order exists and belongs to the current user
     if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.userId !== userId) {
+    if (order.userId !== session.user.id) {
       return NextResponse.json(
         { error: "You don't have permission to view this order" },
         { status: 403 }
       );
     }
 
-    // Calculate automatic order progression based on time
-    const orderTime = new Date(order.createdAt).getTime();
-    const currentTime = Date.now();
-    const orderAgeMinutes = (currentTime - orderTime) / (1000 * 60);
-    
-    // Define status progression and time thresholds (30 min total, divided into stages)
-    const statuses = ["PENDING", "PREPARING", "READY_FOR_DELIVERY", "OUT_FOR_DELIVERY", "DELIVERED"];
-    const stageMinutes = 30 / statuses.length; // Each stage lasts 6 minutes
-    
+    // If we're at PENDING status and the order was created more than 5 minutes ago,
+    // automatically update to CONFIRMED
+    const orderDate = new Date(order.createdAt);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
     let updatedStatus = order.status;
     
-    // Determine the current status based on elapsed time
-    if (orderAgeMinutes <= stageMinutes) {
-      updatedStatus = "PENDING";
-    } else if (orderAgeMinutes <= stageMinutes * 2) {
-      updatedStatus = "PREPARING";
-    } else if (orderAgeMinutes <= stageMinutes * 3) {
-      updatedStatus = "READY_FOR_DELIVERY";
-    } else if (orderAgeMinutes <= stageMinutes * 4) {
-      updatedStatus = "OUT_FOR_DELIVERY";
-    } else {
-      updatedStatus = "DELIVERED";
-    }
-    
-    // Update the order status if it's changed
-    if (updatedStatus !== order.status) {
-      await prisma.order.update({
-        where: { id },
-        data: { status: updatedStatus }
-      });
-      
-      order.status = updatedStatus;
+    if (order.status === "PENDING" && orderDate < fiveMinutesAgo) {
+      updatedStatus = "CONFIRMED";
     }
 
-    return NextResponse.json(order);
+    // If we're at CONFIRMED status and the order was confirmed more than 10 minutes ago,
+    // automatically update to PREPARING
+    if (
+      order.status === "CONFIRMED" &&
+      orderDate < new Date(Date.now() - 10 * 60 * 1000)
+    ) {
+      updatedStatus = "PREPARING";
+    }
+
+    // If we're at PREPARING status and the order was preparing more than 10 minutes ago,
+    // automatically update to READY_FOR_DELIVERY
+    if (
+      order.status === "PREPARING" &&
+      orderDate < new Date(Date.now() - 20 * 60 * 1000)
+    ) {
+      updatedStatus = "READY_FOR_DELIVERY";
+    }
+
+    // If we're at READY_FOR_DELIVERY status and the order was ready more than 5 minutes ago,
+    // automatically update to OUT_FOR_DELIVERY
+    if (
+      order.status === "READY_FOR_DELIVERY" &&
+      orderDate < new Date(Date.now() - 25 * 60 * 1000)
+    ) {
+      updatedStatus = "OUT_FOR_DELIVERY";
+    }
+
+    // If we're at OUT_FOR_DELIVERY status and the order was out for delivery more than 15 minutes ago,
+    // automatically update to DELIVERED
+    if (
+      order.status === "OUT_FOR_DELIVERY" &&
+      orderDate < new Date(Date.now() - 40 * 60 * 1000)
+    ) {
+      updatedStatus = "DELIVERED";
+    }
+
+    // If the status changed, update the database
+    if (updatedStatus !== order.status) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: updatedStatus }
+      });
+    }
+
+    // Include the updated status if it changed
+    const responseOrder = {
+      ...order,
+      status: updatedStatus,
+    };
+
+    return NextResponse.json(responseOrder);
   } catch (error) {
     console.error("Error fetching order:", error);
     return NextResponse.json(
-      { error: "Failed to fetch order details" },
+      { error: "Failed to fetch order", details: String(error) },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(
-  request: Request
-  // We don't use context.params to avoid the Next.js dynamic API error
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
+  const orderId = params.id;
+
   try {
     const session = await getServerSession(authOptions);
-
+    
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be logged in to delete orders" },
+        { error: "Not authenticated" },
         { status: 401 }
       );
     }
 
-    // Extract ID from URL to avoid 'sync dynamic APIs' error
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
-    const id = pathParts[pathParts.length - 1];
-    const userId = session.user.id;
-
-    // First check if the order exists and belongs to the user
+    // Check if order exists
     const order = await prisma.order.findUnique({
-      where: { id },
-      select: { userId: true }
+      where: { id: orderId },
     });
 
     if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.userId !== userId) {
+    if (order.userId !== session.user.id) {
       return NextResponse.json(
         { error: "You don't have permission to delete this order" },
         { status: 403 }
       );
     }
 
-    // Delete order items first
+    // Delete order items first (handle foreign key constraints)
     await prisma.orderItem.deleteMany({
-      where: { orderId: id }
+      where: { orderId },
     });
 
-    // Then delete the order
+    // Delete the order
     await prisma.order.delete({
-      where: { id }
+      where: { id: orderId },
     });
 
-    return NextResponse.json({ success: true, message: "Order deleted successfully" });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting order:", error);
     return NextResponse.json(

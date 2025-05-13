@@ -9,6 +9,15 @@ import { OrderStatus as ContextOrderStatus, OrderItem as ContextOrderItem } from
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEffect, useState } from "react";
 
+// For static export - generate example order IDs
+export function generateStaticParams() {
+  return [
+    { id: 'example-order-1' },
+    { id: 'example-order-2' },
+    { id: 'example-order-3' },
+  ];
+}
+
 const statusSteps = [
   { id: "pending", label: "Order Placed" },
   { id: "preparing", label: "Preparing" },

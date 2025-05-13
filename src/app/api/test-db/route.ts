@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-static';
+
 export async function GET() {
   try {
     // Simple query to check if the database is connected
