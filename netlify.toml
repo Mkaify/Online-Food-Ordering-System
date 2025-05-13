@@ -1,9 +1,14 @@
 [build]
-  command = "npm run build"
-  publish = ".next"
+  command = "pwsh -File ./netlify-build.ps1"
+  publish = "public"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs" 
+# Handle SPA redirects and rewrites
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false 
