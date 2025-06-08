@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useParams, redirect } from "next/navigation";
+import { useParams, redirect, useRouter } from "next/navigation";
 import { MenuItemSkeleton } from "@/components/common/Skeletons";
 import { useCart } from "@/contexts/CartContext";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 interface MenuItem {
   id: string;
@@ -91,6 +92,8 @@ const getMenuItemImage = (category: string, name: string) => {
 export default function RestaurantDetail() {
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : null;
+  const router = useRouter();
+  const { data: session } = useSession();
   
   // Redirect numeric IDs to named IDs
   if (id && !isNaN(Number(id)) && ID_MAP[id]) {
@@ -100,9 +103,28 @@ export default function RestaurantDetail() {
   const { addItem } = useCart();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [responseStatus, setResponseStatus] = useState<number | null>(null);
+  const [notification, setNotification] = useState<{message: string, item: string} | null>(null);
+  
+  // Effect to hide notification after 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -196,6 +218,12 @@ export default function RestaurantDetail() {
     : menuItems.filter(item => item.category === selectedCategory);
 
   const handleAddToCart = (item: MenuItem) => {
+    if (!session?.user) {
+      // Redirect to login if not authenticated
+      router.push('/login');
+      return;
+    }
+    
     addItem({
       id: item.id,
       name: item.name,
@@ -203,94 +231,114 @@ export default function RestaurantDetail() {
       image: item.image,
       restaurantId: restaurant.id,
     });
+
+    // Show notification
+    setNotification({
+      message: "Added to cart",
+      item: item.name
+    });
   };
 
   return (
-    <ProtectedRoute>
-      <div className="space-y-8">
-        {/* Restaurant Header */}
-        <div className="relative h-64 rounded-lg overflow-hidden">
-          <Image
-            src={restaurant.image || getRestaurantImage(restaurant.id)}
-            alt={restaurant.name}
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-40" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-white">
-              <h1 className="text-4xl font-bold mb-2">{restaurant.name}</h1>
-              <p className="text-lg">{restaurant.description}</p>
-            </div>
+    <div className="space-y-8 relative">
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50 animate-fadeIn">
+          <p><span className="font-semibold">{notification.item}</span> {notification.message}</p>
+        </div>
+      )}
+
+      {/* Restaurant Header */}
+      <div className="relative h-64 rounded-lg overflow-hidden">
+        <Image
+          src={restaurant.image || getRestaurantImage(restaurant.id)}
+          alt={restaurant.name}
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-40" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-white">
+            <h1 className="text-4xl font-bold mb-2">{restaurant.name}</h1>
+            <p className="text-lg">{restaurant.description}</p>
           </div>
         </div>
+      </div>
 
-        {/* Restaurant Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Contact Information</h2>
-            <p className="text-gray-600">{restaurant.address}</p>
-            <p className="text-gray-600">{restaurant.phone}</p>
-            <p className="text-gray-600">{restaurant.email}</p>
-          </div>
+      {/* Restaurant Info */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Contact Information</h2>
+          <p className="text-gray-600">{restaurant.address}</p>
+          <p className="text-gray-600">{restaurant.phone}</p>
+          <p className="text-gray-600">{restaurant.email}</p>
         </div>
+      </div>
 
-        {/* Menu Categories */}
-        <div className="flex space-x-4 overflow-x-auto pb-4">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap ${
-                selectedCategory === category
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+      {/* Menu Categories */}
+      <div className="flex space-x-4 overflow-x-auto pb-4">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`px-4 py-2 rounded-full whitespace-nowrap ${
+              selectedCategory === category
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Menu Items */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredMenu.length > 0 ? (
+          filteredMenu.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
             >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Menu Items */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMenu.length > 0 ? (
-            filteredMenu.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="relative h-48">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
-                  <p className="text-gray-600 mb-2">{item.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold">${item.price.toFixed(2)}</span>
+              <div className="relative h-48">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
+                <p className="text-gray-600 mb-2">{item.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold">${item.price.toFixed(2)}</span>
+                  {session?.user ? (
                     <button
                       onClick={() => handleAddToCart(item)}
                       className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                     >
                       Add to Cart
                     </button>
-                  </div>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors"
+                    >
+                      Sign in to Order
+                    </Link>
+                  )}
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-8 text-gray-500">
-              No items available in this category
             </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-8 text-gray-500">
+            No items available in this category
+          </div>
+        )}
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }

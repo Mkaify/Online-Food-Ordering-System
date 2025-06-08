@@ -104,8 +104,8 @@ export default function CheckoutSuccessPage() {
             </svg>
             Go to Home
           </Link>
-          <Link
-            href="/orders"
+          <button
+            onClick={() => router.push('/orders')}
             className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center"
           >
             <svg
@@ -122,7 +122,7 @@ export default function CheckoutSuccessPage() {
               />
             </svg>
             View Orders
-          </Link>
+          </button>
         </div>
       </div>
     </ProtectedRoute>
