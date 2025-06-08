@@ -63,8 +63,6 @@ npm run dev
 
 ## Screenshots
 
-## Screenshots
-
 <img src="images/1register.png" alt="Register" width="600"/>
 <img src="images/2home.png" alt="Home" width="600"/>
 <img src="images/3restaurants.png" alt="Restaurants" width="600"/>
