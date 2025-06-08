@@ -63,7 +63,20 @@ npm run dev
 
 ## Screenshots
 
-(Add some screenshots of your application here)
+## Screenshots
+
+<img src="images/1register.png" alt="Register" width="600"/>
+<img src="images/2home.png" alt="Home" width="600"/>
+<img src="images/3restaurants.png" alt="Restaurants" width="600"/>
+<img src="images/4spicy indian.png" alt="Spicy Indian" width="600"/>
+<img src="images/5added to cart.png" alt="Added to Cart" width="600"/>
+<img src="images/6cart.png" alt="Cart" width="600"/>
+<img src="images/7checkout.png" alt="Checkout" width="600"/>
+<img src="images/8confirmation.png" alt="Confirmation" width="600"/>
+<img src="images/9success.png" alt="Success" width="600"/>
+<img src="images/10orders.png" alt="Orders" width="600"/>
+<img src="images/11orderDetails.png" alt="Order Details" width="600"/>
+<img src="images/12profile.png" alt="Profile" width="600"/>
 
 ## License
 
