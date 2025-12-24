@@ -7,7 +7,7 @@ import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { OrderStatus as ContextOrderStatus, OrderItem as ContextOrderItem } from "@/contexts/OrderContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 const statusSteps = [
   { id: "pending", label: "Order Placed" },
@@ -76,7 +76,7 @@ type DatabaseOrder = {
   };
 };
 
-export default function OrderDetailsPage() {
+function OrderDetailsContent() {
   const params = useParams();
   const router = useRouter();
   const orderId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
@@ -473,5 +473,22 @@ export default function OrderDetailsPage() {
         </div>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function OrderDetailsPage() {
+  return (
+    <Suspense fallback={
+      <ProtectedRoute>
+        <div className="container mx-auto p-6">
+          <div className="text-center py-12">
+            <div className="w-12 h-12 border-t-4 border-indigo-600 border-solid rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading order details...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    }>
+      <OrderDetailsContent />
+    </Suspense>
   );
 } 

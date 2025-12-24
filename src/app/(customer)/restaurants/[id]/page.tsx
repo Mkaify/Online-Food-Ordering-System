@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useParams, redirect, useRouter } from "next/navigation";
 import { MenuItemSkeleton } from "@/components/common/Skeletons";
@@ -89,7 +89,7 @@ const getMenuItemImage = (category: string, name: string) => {
   return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c';
 };
 
-export default function RestaurantDetail() {
+function RestaurantDetailContent() {
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : null;
   const router = useRouter();
@@ -340,5 +340,22 @@ export default function RestaurantDetail() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function RestaurantDetail() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-8">
+        <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <MenuItemSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    }>
+      <RestaurantDetailContent />
+    </Suspense>
   );
 }

@@ -28,17 +28,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [total, setTotal] = useState(0);
   const [itemCount, setItemCount] = useState(0);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount (client-side only)
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setItems(JSON.parse(savedCart));
+    if (typeof window !== 'undefined') {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          setItems(JSON.parse(savedCart));
+        } catch (error) {
+          console.error('Failed to parse cart from localStorage:', error);
+        }
+      }
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (client-side only)
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cart', JSON.stringify(items));
+    }
     // Calculate total and item count
     const newTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const newItemCount = items.reduce((sum, item) => sum + item.quantity, 0);

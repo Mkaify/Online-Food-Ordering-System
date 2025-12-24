@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import RestaurantCard from "@/components/restaurants/RestaurantCard";
 
@@ -49,7 +49,7 @@ const getCuisine = (restaurant: Restaurant) => {
   return 'Various';
 };
 
-export default function RestaurantsPage() {
+function RestaurantsContent() {
   const searchParams = useSearchParams();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,5 +123,17 @@ export default function RestaurantsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RestaurantsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Loading restaurants...</div>
+      </div>
+    }>
+      <RestaurantsContent />
+    </Suspense>
   );
 } 
