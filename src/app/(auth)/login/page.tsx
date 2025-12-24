@@ -36,7 +36,7 @@ export default function LoginPage() {
 
       router.push(callbackUrl);
       router.refresh();
-    } catch (error) {
+    } catch {
       setError("Something went wrong");
     } finally {
       setIsLoading(false);
