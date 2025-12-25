@@ -46,13 +46,22 @@ function HomeContent() {
   const [featuredRestaurants, setFeaturedRestaurants] = useState<FeaturedRestaurant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     const fetchRestaurants = async () => {
       try {
         setIsLoading(true);
         setError(null);
         // In a real app, this would be an API call
+        // Use a fixed date to prevent hydration mismatches
+        const baseDate = new Date('2024-01-01T00:00:00Z');
         setFeaturedRestaurants([
           {
             id: "1",
@@ -62,8 +71,8 @@ function HomeContent() {
             phone: "123-456-7890",
             email: "italian@example.com",
             ownerId: "1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: baseDate,
+            updatedAt: baseDate,
             image: "https://images.unsplash.com/photo-1513104890138-7c749659a591",
           },
           {
@@ -74,8 +83,8 @@ function HomeContent() {
             phone: "987-654-3210",
             email: "indian@example.com",
             ownerId: "2",
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: baseDate,
+            updatedAt: baseDate,
             image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe",
           },
           {
@@ -86,8 +95,8 @@ function HomeContent() {
             phone: "555-555-5555",
             email: "chinese@example.com",
             ownerId: "3",
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: baseDate,
+            updatedAt: baseDate,
             image: "https://images.unsplash.com/photo-1563245372-f21724e3856d",
           },
         ]);
@@ -99,7 +108,7 @@ function HomeContent() {
     };
 
     fetchRestaurants();
-  }, []);
+  }, [mounted]);
 
   if (error) {
     return (
@@ -108,7 +117,11 @@ function HomeContent() {
           <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Content</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             Try Again
@@ -129,6 +142,7 @@ function HomeContent() {
             fill
             className="object-cover brightness-50"
             priority
+            unoptimized={process.env.NODE_ENV === 'development'}
           />
         </div>
         <div className="relative z-10 text-white max-w-3xl mx-auto px-4">
@@ -164,6 +178,7 @@ function HomeContent() {
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 768px) 100vw, 25vw"
+                  unoptimized={process.env.NODE_ENV === 'development'}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                   <span className="text-white text-xl font-semibold">
@@ -180,8 +195,8 @@ function HomeContent() {
       <div>
         <h2 className="text-2xl font-bold mb-6">Featured Restaurants</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isLoading ? (
-            // Show skeletons while loading
+          {!mounted || isLoading ? (
+            // Show skeletons while loading or before mount
             Array.from({ length: 3 }).map((_, index) => (
               <RestaurantCardSkeleton key={index} />
             ))
@@ -199,6 +214,7 @@ function HomeContent() {
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 33vw"
+                    unoptimized={process.env.NODE_ENV === 'development'}
                   />
                 </div>
                 <div className="p-4">

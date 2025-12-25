@@ -19,6 +19,7 @@ interface CartContextType {
   clearCart: () => void;
   total: number;
   itemCount: number;
+  isHydrated: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -27,6 +28,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [total, setTotal] = useState(0);
   const [itemCount, setItemCount] = useState(0);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load cart from localStorage on mount (client-side only)
   useEffect(() => {
@@ -34,17 +36,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         try {
-          setItems(JSON.parse(savedCart));
+          const parsedItems = JSON.parse(savedCart);
+          setItems(parsedItems);
         } catch (error) {
           console.error('Failed to parse cart from localStorage:', error);
         }
       }
+      setIsHydrated(true);
     }
   }, []);
 
   // Save cart to localStorage whenever it changes (client-side only)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isHydrated) {
       localStorage.setItem('cart', JSON.stringify(items));
     }
     // Calculate total and item count
@@ -52,7 +56,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const newItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     setTotal(newTotal);
     setItemCount(newItemCount);
-  }, [items]);
+  }, [items, isHydrated]);
 
   const addItem = (item: Omit<CartItem, 'quantity'>) => {
     setItems(currentItems => {
@@ -96,6 +100,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         total,
         itemCount,
+        isHydrated,
       }}
     >
       {children}

@@ -47,17 +47,24 @@ export default function ConfirmationPage() {
   const { user } = useAuth();
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Retrieve checkout data from session storage
-    const data = sessionStorage.getItem('checkoutData');
-    if (!data) {
-      router.push('/checkout');
-      return;
-    }
+    setMounted(true);
+  }, []);
 
-    setCheckoutData(JSON.parse(data));
-  }, [router]);
+  useEffect(() => {
+    // Retrieve checkout data from session storage (client-side only)
+    if (mounted && typeof window !== 'undefined') {
+      const data = sessionStorage.getItem('checkoutData');
+      if (!data) {
+        router.push('/checkout');
+        return;
+      }
+
+      setCheckoutData(JSON.parse(data));
+    }
+  }, [router, mounted]);
 
   const handlePlaceOrder = async () => {
     if (!checkoutData || !user) return;
@@ -130,7 +137,9 @@ export default function ConfirmationPage() {
       
       // Clear cart and session data
       clearCart();
-      sessionStorage.removeItem('checkoutData');
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('checkoutData');
+      }
       
       // Redirect to success page
       router.push('/checkout/success');
@@ -142,8 +151,14 @@ export default function ConfirmationPage() {
     }
   };
 
-  if (!checkoutData) {
-    return <div>Loading...</div>;
+  if (!mounted || !checkoutData) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </ProtectedRoute>
+    );
   }
 
   return (

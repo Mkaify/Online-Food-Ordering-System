@@ -103,20 +103,17 @@ function RestaurantDetailContent() {
   const { addItem } = useCart();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [responseStatus, setResponseStatus] = useState<number | null>(null);
   const [notification, setNotification] = useState<{message: string, item: string} | null>(null);
+  const [mounted, setMounted] = useState(false);
   
-  // Effect to hide notification after 3 seconds
   useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
+    setMounted(true);
+  }, []);
+
+  // Effect to hide notification after 3 seconds
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => {
@@ -127,6 +124,7 @@ function RestaurantDetailContent() {
   }, [notification]);
 
   useEffect(() => {
+    if (!mounted) return;
     const fetchRestaurant = async () => {
       try {
         setIsLoading(true);
@@ -170,7 +168,7 @@ function RestaurantDetailContent() {
       setError("Invalid restaurant ID");
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, mounted]);
 
   if (error) {
     return (
@@ -183,7 +181,11 @@ function RestaurantDetailContent() {
           )}
           <p className="text-gray-500 mb-4">Restaurant ID: {id || 'Not provided'}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             Try Again
@@ -193,7 +195,7 @@ function RestaurantDetailContent() {
     );
   }
 
-  if (isLoading || !restaurant) {
+  if (!mounted || isLoading || !restaurant) {
     return (
       <div className="space-y-8">
         <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
@@ -256,6 +258,7 @@ function RestaurantDetailContent() {
           fill
           className="object-cover"
           priority
+          unoptimized={process.env.NODE_ENV === 'development'}
         />
         <div className="absolute inset-0 bg-black bg-opacity-40" />
         <div className="absolute inset-0 flex items-center justify-center">
@@ -307,6 +310,7 @@ function RestaurantDetailContent() {
                   alt={item.name}
                   fill
                   className="object-cover"
+                  unoptimized={process.env.NODE_ENV === 'development'}
                 />
               </div>
               <div className="p-4">

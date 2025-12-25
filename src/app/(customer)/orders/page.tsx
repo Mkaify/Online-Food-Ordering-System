@@ -63,6 +63,11 @@ export default function OrdersPage() {
   const [isClearing, setIsClearing] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch orders from the database
   const fetchOrders = async () => {
@@ -81,8 +86,10 @@ export default function OrdersPage() {
 
   // Initial fetch
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (mounted) {
+      fetchOrders();
+    }
+  }, [mounted]);
 
   // Refresh orders every 30 seconds
   useEffect(() => {

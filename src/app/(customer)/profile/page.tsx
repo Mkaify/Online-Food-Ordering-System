@@ -37,8 +37,15 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const [orders, setOrders] = useState<OrderWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     // If not authenticated, redirect to login
     if (status === "unauthenticated") {
       redirect("/login?callbackUrl=/profile");
@@ -62,7 +69,7 @@ export default function ProfilePage() {
     };
 
     fetchOrders();
-  }, [status]);
+  }, [status, mounted]);
 
   const handleViewDetails = (orderId: string) => {
     router.push(`/orders/${orderId}`);

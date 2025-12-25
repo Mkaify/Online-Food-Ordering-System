@@ -5,10 +5,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useEffect, useState } from "react";
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, total, clearCart, isHydrated } = useCart();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !isHydrated) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   if (items.length === 0) {
     return (

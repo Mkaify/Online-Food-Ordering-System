@@ -28,8 +28,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for existing session
-    checkAuth();
+    // Check for existing session (client-side only)
+    if (typeof window !== 'undefined') {
+      checkAuth();
+    }
   }, []);
 
   const checkAuth = async () => {

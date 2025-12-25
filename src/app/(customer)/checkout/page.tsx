@@ -26,9 +26,10 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, total } = useCart();
+  const { items, total, isHydrated } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
     deliveryAddress: "",
     phoneNumber: "",
@@ -39,10 +40,24 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    if (items.length === 0) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && isHydrated && items.length === 0) {
       router.push("/cart");
     }
-  }, [items, router]);
+  }, [items, router, mounted, isHydrated]);
+
+  if (!mounted || !isHydrated) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   if (items.length === 0) {
     return null;
@@ -58,13 +73,15 @@ export default function CheckoutPage() {
       checkoutSchema.parse(formData);
 
       // Store checkout data in session storage for the confirmation page
-      sessionStorage.setItem('checkoutData', JSON.stringify({
-        address: formData.deliveryAddress,
-        phone: formData.phoneNumber,
-        paymentMethod: formData.paymentMethod,
-        items: items,
-        total: total
-      }));
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('checkoutData', JSON.stringify({
+          address: formData.deliveryAddress,
+          phone: formData.phoneNumber,
+          paymentMethod: formData.paymentMethod,
+          items: items,
+          total: total
+        }));
+      }
 
       // Redirect to confirmation page instead of immediately processing
       router.push("/checkout/confirmation");

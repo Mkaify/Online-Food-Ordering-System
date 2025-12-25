@@ -36,6 +36,7 @@ export default function RestaurantCard({
           alt={name}
           fill
           className="object-cover"
+          unoptimized={process.env.NODE_ENV === 'development'}
         />
       </div>
       <div className="p-4">
