@@ -25,5 +25,10 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/restaurants/:path*", "/login"],
+  matcher: [
+    "/restaurants/:path*",
+    "/cart/:path*",
+    "/checkout/:path*",
+    "/login",
+  ],
 }; 

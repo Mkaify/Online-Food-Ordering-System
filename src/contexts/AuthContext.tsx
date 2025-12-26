@@ -1,121 +1,48 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
+import React, { createContext, useContext } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
-interface User {
+type User = {
   id: string;
   name: string;
   email: string;
-}
+  role?: string;
+};
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (data: LoginFormData) => Promise<void>;
-  register: (data: RegisterFormData) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
-  useEffect(() => {
-    // Check for existing session (client-side only)
-    if (typeof window !== 'undefined') {
-      checkAuth();
-    }
-  }, []);
+  const loading = status === "loading";
 
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/session');
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
+  const user: User | null = session?.user
+    ? {
+        id: session.user .id,
+        name: session.user.name ?? "",
+        email: session.user.email ?? "",
+        role: session.user.role,
       }
-    } catch (err) {
-      console.error('Auth check failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (data: LoginFormData) => {
-    try {
-      setError(null);
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
-      }
-
-      const { user } = await response.json();
-      setUser(user);
-      router.push('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      throw err;
-    }
-  };
-
-  const register = async (data: RegisterFormData) => {
-    try {
-      setError(null);
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
-      }
-
-      const { user } = await response.json();
-      setUser(user);
-      router.push('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
-      throw err;
-    }
-  };
+    : null;
 
   const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      router.push('/login');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Logout failed');
-      throw err;
-    }
+    await signOut({ redirect: false });
+    router.push("/login");
+    router.refresh();
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        error,
-        login,
-        register,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, error: null, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -124,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-} 
+}
