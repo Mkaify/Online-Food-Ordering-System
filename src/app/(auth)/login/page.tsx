@@ -25,8 +25,7 @@ function LoginForm() {
       const result = await signIn("credentials", {
         email,
         password,
-        callbackUrl,
-        redirect: false,
+        redirect: false, // ❗ we control redirect
       });
 
       if (result?.error) {
@@ -34,7 +33,8 @@ function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
+      // ✅ SUCCESS → return user to original page
+      router.replace(callbackUrl);
       router.refresh();
     } catch {
       setError("Something went wrong");
@@ -46,60 +46,46 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-        </div>
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          Sign in to your account
+        </h2>
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
               {error}
             </div>
           )}
+
           <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="Email address"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-t-md"
+            />
+            <input
+              name="password"
+              type="password"
+              required
+              placeholder="Password"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-b-md"
+            />
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Signing in..." : "Sign in"}
-            </button>
-          </div>
-          
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2 px-4 text-white bg-indigo-600 rounded-md disabled:opacity-50"
+          >
+            {isLoading ? "Signing in..." : "Sign in"}
+          </button>
+
           <div className="text-sm text-center">
             <Link
-              href="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              className="text-indigo-600 hover:text-indigo-500"
             >
               Don&apos;t have an account? Sign up
             </Link>
@@ -112,19 +98,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
-            </h2>
-          </div>
-          <div className="text-center text-gray-500">Loading...</div>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
       <LoginForm />
     </Suspense>
   );
-} 
+}
